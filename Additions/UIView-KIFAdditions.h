@@ -10,6 +10,8 @@
 #import <UIKit/UIKit.h>
 
 typedef CGPoint KIFDisplacement;
+typedef void (^KIFEventBlock)(UIEvent *event);
+
 
 @interface UIView (KIFAdditions)
 
@@ -38,17 +40,27 @@ typedef CGPoint KIFDisplacement;
 - (void)tapAtPoint:(CGPoint)point;
 - (void)longPressAtPoint:(CGPoint)point duration:(NSTimeInterval)duration;
 
+- (void)tapWithBlock:(KIFEventBlock)block;
+- (void)tapAtPoint:(CGPoint)point withBlock:(KIFEventBlock)block;
+- (void)longPressAtPoint:(CGPoint)point duration:(NSTimeInterval)duration withBlock:(KIFEventBlock)block;
+
 /*!
  @method dragFromPoint:toPoint:
  @abstract Simulates dragging a finger on the screen between the given points.
  @discussion Causes the application to dispatch a sequence of touch events which simulate dragging a finger from startPoint to endPoint.
  @param startPoint The point at which to start the drag, in the coordinate system of the receiver.
  @param endPoint The point at which to end the drag, in the coordinate system of the receiver.
+ @param block The block being called whenever an event has been dispatched.
  */
 - (void)dragFromPoint:(CGPoint)startPoint toPoint:(CGPoint)endPoint;
 - (void)dragFromPoint:(CGPoint)startPoint toPoint:(CGPoint)endPoint steps:(NSUInteger)stepCount;
 - (void)dragFromPoint:(CGPoint)startPoint displacement:(KIFDisplacement)displacement steps:(NSUInteger)stepCount;
 - (void)dragAlongPathWithPoints:(CGPoint *)points count:(NSInteger)count;
+
+- (void)dragFromPoint:(CGPoint)startPoint toPoint:(CGPoint)endPoint withBlock:(KIFEventBlock)block;
+- (void)dragFromPoint:(CGPoint)startPoint toPoint:(CGPoint)endPoint steps:(NSUInteger)stepCount withBlock:(KIFEventBlock)block;
+- (void)dragFromPoint:(CGPoint)startPoint displacement:(KIFDisplacement)displacement steps:(NSUInteger)stepCount withBlock:(KIFEventBlock)block;
+- (void)dragAlongPathWithPoints:(CGPoint *)points count:(NSInteger)count withBlock:(KIFEventBlock)block;
 
 /*!
  @method isTappableWithHitTestResultView:

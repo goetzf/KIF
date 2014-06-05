@@ -334,12 +334,22 @@ typedef struct __GSEvent * GSEventRef;
 
 - (void)tap;
 {
+	[self tapWithBlock: nil];
+}
+
+- (void)tapWithBlock:(KIFEventBlock)block
+{
     CGPoint centerPoint = CGPointMake(self.frame.size.width * 0.5f, self.frame.size.height * 0.5f);
     
-    [self tapAtPoint:centerPoint];
+    [self tapAtPoint:centerPoint withBlock:block];
 }
 
 - (void)tapAtPoint:(CGPoint)point;
+{
+	[self tapAtPoint:point withBlock:nil];
+}
+
+- (void)tapAtPoint:(CGPoint)point withBlock:(KIFEventBlock)block;
 {
     // Web views don't handle touches in a normal fashion, but they do have a method we can call to tap them
     // This may not be necessary anymore. We didn't properly support controls that used gesture recognizers
@@ -363,11 +373,12 @@ typedef struct __GSEvent * GSEventRef;
     [touch setPhaseAndUpdateTimestamp:UITouchPhaseBegan];
     
     UIEvent *event = [self eventWithTouch:touch];
-
     [[UIApplication sharedApplication] sendEvent:event];
+	if (block) block(event);
     
     [touch setPhaseAndUpdateTimestamp:UITouchPhaseEnded];
     [[UIApplication sharedApplication] sendEvent:event];
+	if (block) block(event);
 
     // Dispatching the event doesn't actually update the first responder, so fake it
     if ([touch.view isDescendantOfView:self] && [self canBecomeFirstResponder]) {
@@ -380,11 +391,17 @@ typedef struct __GSEvent * GSEventRef;
 
 - (void)longPressAtPoint:(CGPoint)point duration:(NSTimeInterval)duration
 {
+	[self longPressAtPoint:point duration:duration withBlock:nil];
+}
+
+- (void)longPressAtPoint:(CGPoint)point duration:(NSTimeInterval)duration withBlock:(KIFEventBlock)block
+{
     UITouch *touch = [[UITouch alloc] initAtPoint:point inView:self];
     [touch setPhaseAndUpdateTimestamp:UITouchPhaseBegan];
     
     UIEvent *eventDown = [self eventWithTouch:touch];
     [[UIApplication sharedApplication] sendEvent:eventDown];
+	if (block) block(eventDown);
     
     CFRunLoopRunInMode(kCFRunLoopDefaultMode, DRAG_TOUCH_DELAY, false);
     
@@ -394,6 +411,7 @@ typedef struct __GSEvent * GSEventRef;
         
         UIEvent *eventStillDown = [self eventWithTouch:touch];
         [[UIApplication sharedApplication] sendEvent:eventStillDown];
+		if (block) block(eventStillDown);
         
         CFRunLoopRunInMode(kCFRunLoopDefaultMode, DRAG_TOUCH_DELAY, false);
     }
@@ -401,6 +419,7 @@ typedef struct __GSEvent * GSEventRef;
     [touch setPhaseAndUpdateTimestamp:UITouchPhaseEnded];
     UIEvent *eventUp = [self eventWithTouch:touch];
     [[UIApplication sharedApplication] sendEvent:eventUp];
+	if (block) block(eventUp);
     
     // Dispatching the event doesn't actually update the first responder, so fake it
     if ([touch.view isDescendantOfView:self] && [self canBecomeFirstResponder]) {
@@ -411,17 +430,31 @@ typedef struct __GSEvent * GSEventRef;
 
 - (void)dragFromPoint:(CGPoint)startPoint toPoint:(CGPoint)endPoint;
 {
-    [self dragFromPoint:startPoint toPoint:endPoint steps:3];
+	[self dragFromPoint:startPoint toPoint:endPoint withBlock:nil];
 }
 
+- (void)dragFromPoint:(CGPoint)startPoint toPoint:(CGPoint)endPoint withBlock:(KIFEventBlock)block;
+{
+    [self dragFromPoint:startPoint toPoint:endPoint steps:3 withBlock:block];
+}
 
 - (void)dragFromPoint:(CGPoint)startPoint toPoint:(CGPoint)endPoint steps:(NSUInteger)stepCount;
 {
+	[self dragFromPoint:startPoint toPoint:endPoint steps:stepCount withBlock:nil];
+}
+
+- (void)dragFromPoint:(CGPoint)startPoint toPoint:(CGPoint)endPoint steps:(NSUInteger)stepCount withBlock:(KIFEventBlock)block;
+{
     KIFDisplacement displacement = CGPointMake(endPoint.x - startPoint.x, endPoint.y - startPoint.y);
-    [self dragFromPoint:startPoint displacement:displacement steps:stepCount];
+    [self dragFromPoint:startPoint displacement:displacement steps:stepCount withBlock:block];
 }
 
 - (void)dragFromPoint:(CGPoint)startPoint displacement:(KIFDisplacement)displacement steps:(NSUInteger)stepCount;
+{
+	[self dragFromPoint:startPoint displacement:displacement steps:stepCount withBlock:nil];
+}
+
+- (void)dragFromPoint:(CGPoint)startPoint displacement:(KIFDisplacement)displacement steps:(NSUInteger)stepCount withBlock:(KIFEventBlock)block;
 {
     CGPoint *path = alloca(stepCount * sizeof(CGPoint));
     
@@ -432,10 +465,15 @@ typedef struct __GSEvent * GSEventRef;
                               startPoint.y + (progress * displacement.y));
     }
     
-    [self dragAlongPathWithPoints:path count:stepCount];
+    [self dragAlongPathWithPoints:path count:stepCount withBlock:block];
 }
 
 - (void)dragAlongPathWithPoints:(CGPoint *)points count:(NSInteger)count;
+{
+	[self dragAlongPathWithPoints:points count:count withBlock:nil];
+}
+
+- (void)dragAlongPathWithPoints:(CGPoint *)points count:(NSInteger)count withBlock:(KIFEventBlock)block;
 {
     // we need at least two points in order to make segments
     if (count < 2) {
@@ -448,6 +486,7 @@ typedef struct __GSEvent * GSEventRef;
     
     UIEvent *eventDown = [self eventWithTouch:touch];
     [[UIApplication sharedApplication] sendEvent:eventDown];
+	if (block) block(eventDown);
     
     CFRunLoopRunInMode(UIApplicationCurrentRunMode, DRAG_TOUCH_DELAY, false);
 
@@ -457,6 +496,7 @@ typedef struct __GSEvent * GSEventRef;
         
         UIEvent *eventDrag = [self eventWithTouch:touch];
         [[UIApplication sharedApplication] sendEvent:eventDrag];
+		if (block) block(eventDrag);
 
         CFRunLoopRunInMode(UIApplicationCurrentRunMode, DRAG_TOUCH_DELAY, false);
     }
@@ -465,6 +505,7 @@ typedef struct __GSEvent * GSEventRef;
     
     UIEvent *eventUp = [self eventWithTouch:touch];
     [[UIApplication sharedApplication] sendEvent:eventUp];
+	if (block) block(eventUp);
     
     // Dispatching the event doesn't actually update the first responder, so fake it
     if (touch.view == self && [self canBecomeFirstResponder]) {
