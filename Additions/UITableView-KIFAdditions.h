@@ -7,10 +7,14 @@
 //  See the LICENSE file distributed with this work for the terms under
 //  which Square, Inc. licenses this file to you.
 
+#import "UIView-KIFAdditions.h"
+
 #import <UIKit/UIKit.h>
 
 @interface UITableView (KIFAdditions)
 
 - (BOOL)dragCell:(UITableViewCell *)cell toIndexPath:(NSIndexPath *)indexPath error:(NSError **)error;
+
+- (BOOL)dragCell:(UITableViewCell *)cell verticalDisplacement:(CGFloat)verticalDisplacement error:(NSError **)error withBlock:(KIFEventBlock)block;
 
 @end
